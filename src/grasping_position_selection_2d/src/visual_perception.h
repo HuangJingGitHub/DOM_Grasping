@@ -300,7 +300,7 @@ public:
             return {};
         }
         if (S_0.size() < 2) {
-            cerr << " Size of feedback points and target points in Function " << __FUNCTION__ << " is "
+            cerr << "Size of feedback points and target points in Function " << __FUNCTION__ << " is "
                  << S_0.size() << "\n";
             return {Point2f(0, 0), Point2f(0, 0)};
         }
