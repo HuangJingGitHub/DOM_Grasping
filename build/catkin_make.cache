@@ -1,0 +1,2 @@
+grasping_position_selection_2d
+-DCATKIN_DEVEL_PREFIX=/home/jing/Documents/Scripts/temp_tests/grasping_DOM/devel -DCMAKE_INSTALL_PREFIX=/home/jing/Documents/Scripts/temp_tests/grasping_DOM/install -G Unix Makefiles

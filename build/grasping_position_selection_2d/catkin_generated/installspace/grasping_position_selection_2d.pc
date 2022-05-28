@@ -1,0 +1,8 @@
+prefix=/home/jing/Documents/Scripts/temp_tests/grasping_DOM/install
+
+Name: grasping_position_selection_2d
+Description: Description of grasping_position_selection_2d
+Version: 0.0.0
+Cflags: 
+Libs: -L${prefix}/lib 
+Requires: roscpp rospy std_msgs
