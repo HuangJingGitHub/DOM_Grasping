@@ -19,6 +19,7 @@ Point2f feedback_target_pt_picked;
 bool add_remove_pt = false;
 bool add_remove_target_pt = false;
 bool clear_all_feedback_pt = false;
+bool save_image_flag = false;
 
 static void onMouse(int event, int x, int y, int, void*) {
     if (event == EVENT_LBUTTONDOWN) {
@@ -32,13 +33,17 @@ static void onMouse(int event, int x, int y, int, void*) {
     if (event == EVENT_LBUTTONDBLCLK) {
         clear_all_feedback_pt = true;
     }
+    if (event == EVENT_RBUTTONDBLCLK) {
+        save_image_flag = true;
+    }
 }
+
 
 class LK_Tracker {
 public: 
     string window_to_track_;
     TermCriteria termiantion_criteria_;
-    static const int points_num_ = 5;  // Determination of Jd size needs a constexpr argument.
+    static const int points_num_ = 8;  // Determination of Jd size needs a constexpr argument.
     vector<Point2f> points_[2];
     vector<Point2f> target_pts_[2];
     Scalar points_color_;
@@ -90,10 +95,9 @@ public:
 
         if (!points_[0].empty()) {
             InvokeLK(points_[0], points_[1], image, points_color_); 
-            if (!target_pts_[0].empty())
-                InvokeLK(target_pts_[0], target_pts_[1], image, Scalar(0, 255, 0));
+            //if (!target_pts_[0].empty())
+                //InvokeLK(target_pts_[0], target_pts_[1], image, Scalar(0, 255, 0));
         }
-        Display(image);
         next_gray_img_.copyTo(pre_gray_img_);
     } 
 
@@ -130,17 +134,6 @@ public:
 
     bool ValidFeedbackAndTargetPts() {
         return points_[0].size() == target_pts_[0].size() && points_[0].size() > 0;
-    }
-
-
-    void Display(Mat& image) {
-        if (points_[0].size() == target_pts_[0].size()) {
-            for (int i = 0; i < points_[0].size(); i++) {
-                arrowedLine(image, points_[0][i], target_pts_[0][i], Scalar(0, 255, 0), 2);
-                putText(image, "S0" + to_string(i + 1), points_[0][i] + Point2f(5, 5), 
-                        0, 0.5, Scalar(0, 0, 0), 2);
-            }
-        }
     }
 };
 
@@ -185,7 +178,8 @@ public:
             DO_extract_succeed_ = false;
         }
         else {
-            findContours(destination_img, DO_contours_, RETR_EXTERNAL, CHAIN_APPROX_SIMPLE, Point(0, 0));
+            //findContours(destination_img, DO_contours_, RETR_EXTERNAL, CHAIN_APPROX_SIMPLE, Point(0, 0));
+            findContours(destination_img, DO_contours_, RETR_EXTERNAL, CHAIN_APPROX_NONE, Point(0, 0));
             largest_DO_countor_idx_ = 0;
             for (int i = 1; i < DO_contours_.size(); i++) {
                 largest_DO_countor_idx_ = (DO_contours_[i].size() > DO_contours_[largest_DO_countor_idx_].size())
@@ -210,7 +204,7 @@ public:
 
 class GraspPositionSelector {
     double gamma_ = 0.25;
-    double k_ = 0.001;
+    double k_ = 0.01;
     double r_ = 10;
     double delta_r_ = 10;
     double delta_ = 0.1;
@@ -236,7 +230,7 @@ public:
         Q_value = vector<double>(contour_pt_num, 0);
 
         for (size_t contour_idx = 0; contour_idx < contour_pt_num; contour_idx++) {
-            double Q = 0;
+            double Q = 1;
             Eigen::Vector2d s_g(DO_contour[contour_idx].x, DO_contour[contour_idx].y);
             
             for (size_t pt_idx = 0; pt_idx < pt_num; pt_idx++) {
@@ -269,7 +263,7 @@ public:
                     double M =  exp(-k_ * d_i_norm) * (1 - gamma_ * sin(alpha_i)) * lambda;
                     q_i += M * step_len;
                 }
-                Q += q_i;
+                Q *= q_i;
             }
             Q_value[contour_idx] = Q;
         }
@@ -302,7 +296,7 @@ public:
         if (S_0.size() < 2) {
             cerr << "Size of feedback points and target points in Function " << __FUNCTION__ << " is "
                  << S_0.size() << "\n";
-            return {Point2f(0, 0), Point2f(0, 0)};
+            return {};
         }
 
         vector<double> S_displacement(S_0.size(), 0);
@@ -322,8 +316,14 @@ public:
         double e_k_1_norm = e_k_1.norm();
         for (size_t i = 0; i < S_0.size(); i++) {
             Eigen::Vector2d e_i(S_d[i].x - S_0[i].x, S_d[i].y - S_0[i].y);
-            double z_i = acos(e_i.dot(e_k_1) / (e_i.norm() * e_k_1_norm));
-            double lambda_k_i = 1 / (exp(-z_i)) * distance_to_s_k_1[i] / max_distance_to_s_k_1;
+            double z_i = 0, cos_val = e_i.dot(e_k_1) / (e_i.norm() * e_k_1_norm);
+            if (cos_val <= -1.0)
+                z_i = -M_PI;
+            else if (cos_val >= 1.0)
+                z_i = 0;
+            else
+                z_i = acos(cos_val);
+            double lambda_k_i = 1 / (1 + (exp(-z_i))) * distance_to_s_k_1[i] / max_distance_to_s_k_1;
             evaluation_J_k[i] = lambda_k_i * S_displacement[i];
         }
         size_t max_J_k_idx = max_element(evaluation_J_k.begin(), evaluation_J_k.end()) - evaluation_J_k.begin();

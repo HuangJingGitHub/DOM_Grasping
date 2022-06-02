@@ -20,6 +20,7 @@ find_package(catkin REQUIRED COMPONENTS
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
 find_package(OpenCV REQUIRED)
+find_package(OpenGL REQUIRED)
 
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and global scripts declared therein get installed
@@ -122,6 +123,7 @@ catkin_package(
 include_directories(
 # include
   ${catkin_INCLUDE_DIRS}
+  src/rs_samples/third-party/imgui
 )
 
 ## Declare a C++ library
@@ -216,3 +218,24 @@ target_link_libraries(get_HSV_thresholds ${OpenCV_LIBS} opencv_aruco)
 
 add_executable(grasping_position_selection_main src/selection_main.cpp)
 target_link_libraries(grasping_position_selection_main ${OpenCV_LIBS} ${catkin_LIBRARIES})
+
+add_executable(rs_hello src/rs_samples/realsense_hello.cpp)
+target_link_libraries(rs_hello realsense2)
+
+add_executable(rs_depth src/rs_samples/rs_depth.c)
+target_link_libraries(rs_depth realsense2)
+
+add_executable(rs_imshow src/rs_samples/rs_imshow.cpp)
+target_link_libraries(rs_imshow realsense2 ${OpenCV_LIBS})
+
+add_executable(rs_align src/rs_samples/rs_align.cpp 
+                        src/rs_samples/third-party/imgui/imgui.cpp
+                        src/rs_samples/third-party/imgui/imgui_draw.cpp 
+                        src/rs_samples/third-party/imgui/imgui_impl_glfw.cpp)
+target_link_libraries(rs_align realsense2 realsense2 glfw GL GLU)
+
+add_executable(rs_pointcloud src/rs_samples/rs_pointcloud.cpp)
+target_link_libraries(rs_pointcloud realsense2 glfw GL GLU)
+
+add_executable(rs_grabcuts src/rs_samples/rs_grabcuts.cpp)
+target_link_libraries(rs_grabcuts realsense2 ${OpenCV_LIBS})
