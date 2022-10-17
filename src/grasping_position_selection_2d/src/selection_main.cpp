@@ -22,8 +22,6 @@ private:
     LK_Tracker tracker_;
     ImgExtractor extractor_;
     GraspPositionSelector selector_;
-    vector<Point2f> target_feedback_pts_;
-    Point2f ee_to_obs_obs_pt_;
 
 public:
     VisualProcessCore(string ros_image_stream, 
@@ -57,18 +55,24 @@ public:
         if (extractor_.DO_extract_succeed_ && tracker_.ValidFeedbackAndTargetPts()) {
             vector<double> cur_Q_value(extractor_.DO_contour_.size(), 0);
             // Point2f grasp_pt = selector_.SelectSingleGraspPosition(extractor_.DO_contour_, cur_Q_value, 
-            //                                    tracker_.points_[0], tracker_.target_pts_[0]);
+            //                                    tracker_.points_[0], tracker_.target_pts_);
             //circle(cv_ptr->image, grasp_pt, 3, Scalar(255, 0, 0), -1);
-            grasp_pts = selector_.SelectDualGraspPositions(extractor_.DO_contour_, cur_Q_value, 
-                                    tracker_.points_[0], tracker_.target_pts_[0]);
+            //if (tracker_.points_[0].size() <= 6)
+            //    grasp_pts = selector_.SelectDualGraspPositions(extractor_.DO_contour_, cur_Q_value, 
+            //                        tracker_.points_[0], tracker_.target_pts_);
+            //else {
+                grasp_pts = selector_.SelectDualGraspPositionsByCluster(extractor_.DO_contour_, cur_Q_value, 
+                                    tracker_.points_[0], tracker_.target_pts_);           
+                cout << "Using Clustering\n";
+            //}
         }
         
         // display
         // if (extractor_.DO_extract_succeed_)
             // drawContours(cv_ptr->image, extractor_.DO_contours_, extractor_.largest_DO_countor_idx_, Scalar(250, 0, 150), 2);        
-        if (tracker_.points_[0].size() == tracker_.target_pts_[0].size()) {
+        if (tracker_.points_[0].size() == tracker_.target_pts_.size()) {
             for (int i = 0; i < tracker_.points_[0].size(); i++) {
-                arrowedLine(cv_ptr->image, tracker_.points_[0][i], tracker_.target_pts_[0][i], Scalar(0, 255, 0), 2);
+                arrowedLine(cv_ptr->image, tracker_.points_[0][i], tracker_.target_pts_[i], Scalar(0, 255, 0), 2);
                 putText(cv_ptr->image, "S" + to_string(i + 1), tracker_.points_[0][i] + Point2f(5, 5), 
                         0, 0.5, Scalar(0, 0, 0), 2);
             }

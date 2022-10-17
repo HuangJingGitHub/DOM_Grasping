@@ -7,7 +7,8 @@ add_compile_options(-std=c++11)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(catkin REQUIRED COMPONENTS
+find_package(
+  catkin REQUIRED COMPONENTS
   roscpp
   rospy
   std_msgs
@@ -59,11 +60,10 @@ find_package(OpenGL REQUIRED)
 # )
 
 ## Generate services in the 'srv' folder
-# add_service_files(
-#   FILES
-#   Service1.srv
-#   Service2.srv
-# )
+add_service_files(
+  FILES
+  visual_service.srv
+)
 
 ## Generate actions in the 'action' folder
 # add_action_files(
@@ -110,7 +110,7 @@ generate_messages(
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES grasping_position_selection_2d
-  CATKIN_DEPENDS roscpp rospy std_msgs
+  CATKIN_DEPENDS roscpp rospy std_msgs message_runtime
 #  DEPENDS system_lib
 )
 
@@ -215,6 +215,10 @@ target_link_libraries(source_camera ${OpenCV_LIBS} ${catkin_LIBRARIES})
 
 add_executable(get_HSV_thresholds src/get_visual_system_parameters.cpp)
 target_link_libraries(get_HSV_thresholds ${OpenCV_LIBS} opencv_aruco)
+
+add_executable(visual_service src/visual_service.cpp)
+target_link_libraries(visual_service ${OpenCV_LIBS} ${catkin_LIBRARIES})
+add_dependencies(visual_service grasping_position_selection_2d_gencpp)
 
 add_executable(grasping_position_selection_main src/selection_main.cpp)
 target_link_libraries(grasping_position_selection_main ${OpenCV_LIBS} ${catkin_LIBRARIES})
