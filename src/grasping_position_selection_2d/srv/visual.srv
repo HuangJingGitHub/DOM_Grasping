@@ -1,8 +1,0 @@
-int32 num_of_feedback_pts
----
-float32[] feedback_pt
-float32[] target_pt
-float32[] ee_pt
-float32[] Jd
-
-

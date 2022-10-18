@@ -77,7 +77,7 @@ public:
 
 int main(int argc, char** argv) {
     vector<int> DO_HSV_thresholds{0, 0, 0, 180, 255, 255};
-    ifstream HSV_file("./src/visual_module/src/data/HSV_thresholds.txt");
+    ifstream HSV_file("./src/grasping_position_selection_2d/src/parameters/HSV_thresholds.txt");
     if (HSV_file.is_open()) {
         string item_str;
         int cnt = 0, item;

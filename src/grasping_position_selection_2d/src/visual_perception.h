@@ -121,6 +121,8 @@ public:
 
         for (size_t i = 0; i < points_[0].size(); i++)
             circle(image, points_[0][i], 3, points_color_, -1, 8);
+        for (size_t i = 0; i < target_pts_.size(); i++)
+            circle(image, target_pts_[i], 10, Scalar(0, 255, 0), 2, 8);
     } 
 
 
@@ -184,6 +186,7 @@ public:
         delta_ee(0, 0) = ee_point_[0][0].x - ee_point_[1][0].x;
         delta_ee(1, 0) = ee_point_[0][0].y - ee_point_[1][0].y;
 
+        cout << "Current J_d:\n" << cur_Jd_ << "\n";
         if (delta_ee.norm() < 0.5) {
             cur_Jd_ = pre_Jd_;
             return;
