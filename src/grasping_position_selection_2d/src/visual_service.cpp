@@ -97,7 +97,6 @@ public:
             return false;
 
         response.feedback_pt.push_back(0);
-        cout << "Processing the service call...\n";   
         response.feedback_pt[0] = tracker_.points_[0][0].x;
         response.feedback_pt[1] = tracker_.points_[0][0].y;
         response.target_pt[0] = tracker_.target_pts_[0].x;
