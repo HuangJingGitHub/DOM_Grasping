@@ -1,8 +1,8 @@
-int32 num_of_feedback_pts
+int64 feedback_pt_num
 ---
 float32[] feedback_pt
 float32[] target_pt
 float32[] ee_pt
 float32[] Jd
-
+float32[] grasp_pt
 

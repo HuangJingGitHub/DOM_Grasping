@@ -30,15 +30,15 @@ int main(int argc, char** argv) {
         camera_extrinsic_file.close();
     }
     else {
-        std::cout << "Warning: Fail to initialize the camera to base matrix. \n
-                      Default identity matix is used.\n";
+        std::cout << "Warning: Fail to initialize the camera to base matrix. \n"
+                      "Default identity matix is used.\n";
     }
     std::cout << "Extrinsic camera matrix:\n" << camera_to_base << '\n';
 
     std::shared_ptr<FvrRobotClient> robot = std::make_shared<FvrRobotClient>();   
     const std::string server_address = "192.168.2.100";
     const std::string client_address = "192.168.2.109";
-    ConnectionManager robot_connection(robot, server_address, client_address);
+    /*ConnectionManager robot_connection(robot, server_address, client_address);
     std::thread connection([&]() {
         while (true) {
             if (robot_connection.run() != true)
@@ -46,14 +46,13 @@ int main(int argc, char** argv) {
             std::this_thread::sleep_for(std::chrono::seconds(1));
         }
     });
-    ClientTestFunction client_tester(robot);
+    ClientTestFunction client_tester(robot);*/
 
     ros::init(argc, argv, "grasp_manipulate_main");
     ros::NodeHandle node_handle;
-    ros::ServiceClient service_client = node_handle.serviceClient<grasping_position_selection_2d::visual_srv>
-                                        ("visual_service");
+    ros::ServiceClient service_client = node_handle.serviceClient<grasping_position_selection_2d::visual_service>("visual_service");
     grasping_position_selection_2d::visual_service srv;
-    srv.num_of_feedback_pts = 1;
+    srv.request.feedback_pt_num = 1;
 
     std::string start_flag;
     std::cout << "Press 1 to start the manipulation experiment.\n";
@@ -66,7 +65,7 @@ int main(int argc, char** argv) {
     InitializeFiles(motion_interval, motion_magnitude, error_threshold);
     while (true) {
         if (!service_client.call(srv)) {
-            std::cout << "Failed to call service.\n";
+            std::cout << "Fail to call the service.\n";
             return 1;
         }
 
@@ -74,13 +73,7 @@ int main(int argc, char** argv) {
         WriteDataToFile();
         // velocity_controller.DetectViolation(srv);
 
-        ee_velocity_image_3D(0, 0) = ee_path_error_pt(0, 0);
-        ee_velocity_image_3D(1, 0) = ee_path_error_pt(1, 0);
-        ee_velocity_image_3D(2, 0) = 0;
-        ee_velocity_3D = camera_to_base * (-ee_velocity_image_3D);
-        ee_velocity_3D = motion_magnitude / ee_velocity_3D.norm() * ee_velocity_3D; 
-
-        if (robot_connection.robotConnected() == false) {
+        /*if (robot_connection.robotConnected() == false) {
             std::cout << "Fial to connect to robot server!\n";
             continue;
         }
@@ -88,7 +81,7 @@ int main(int argc, char** argv) {
             std::cout << "Fail to execute the command!\n";
             break;
         }
-        std::this_thread::sleep_for(std::chrono::milliseconds(motion_interval));
+        std::this_thread::sleep_for(std::chrono::milliseconds(motion_interval));*/
 
         if (total_error_pt.norm() < error_threshold) {
             if (data_save_os.is_open())
