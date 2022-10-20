@@ -6,6 +6,7 @@
 #include <string>
 #include <vector>
 #include <ctime>
+#include <chrono>
 #include <eigen3/Eigen/Dense>
 #include "grasping_position_selection_2d/visual_service.h"
 
@@ -20,15 +21,16 @@ Eigen::Matrix2f Jd = Eigen::Matrix2f::Identity();
 std::string save_directory = "./src/grasping_position_selection_2d/src/data/";
 std::ofstream  data_save_os;
 std::vector<float> data_vec;
-std::string data_save_order_info = "Format: time---feedback_pt---target_pt---ee_pt---Jd";
-std::time_t cur_time = std::time(0);
-std::tm* cur_tm = std::localtime(&cur_time);
-
+std::string data_save_order_info = "Format: time(ms)---feedback_pt---target_pt---ee_pt---Jd";
+std::chrono::high_resolution_clock::time_point t_start = std::chrono::high_resolution_clock::now();
+int time_shift_ms = 0;
 
 void InitializeFiles(const int& motion_interval, 
                     const float& motion_magnitude, 
                     const float& error_threshold) {
     std::string file_name_postfix, file_name, exp_specification_info;
+    std::time_t cur_time = std::time(0);
+    std::tm* cur_tm = std::localtime(&cur_time);
     file_name_postfix = std::to_string(cur_tm->tm_year + 1900) + "-"
                         + std::to_string(cur_tm->tm_mon + 1) + "-"
                         + std::to_string(cur_tm->tm_mday) + "_"
@@ -56,9 +58,9 @@ void ProcessServece(const grasping_position_selection_2d::visual_service& srv) {
     target_pt(0, 0) = srv.response.target_pt[0]; 
     target_pt(1, 0) = srv.response.target_pt[1]; 
     ee_pt(0, 0) = srv.response.ee_pt[0]; 
-    ee_pt(1, 0) = srv.response.ee_pt[1];
+    ee_pt(1, 0) = srv.response.ee_pt[1];    
     grasp_pt(0, 0) = srv.response.grasp_pt[0];
-    grasp_pt(1, 0) = srv.response.grasp_pt[1];
+    grasp_pt(1, 0) = srv.response.grasp_pt[1];   
     for (int row = 0, cnt = 0; row < 2; row++)
         for (int col = 0; col < 2; col++) {
             Jd(row, col) = srv.response.Jd[cnt];
@@ -90,7 +92,12 @@ void WriteDataToFile() {
     if (data_save_os.is_open() == false) 
         std::cerr << "Fail to open the file. Saving data failed.\n";
     
-    data_save_os << cur_tm->tm_hour << " " << cur_tm->tm_min << " " << cur_tm->tm_sec << ": ";
+    std::chrono::high_resolution_clock::time_point t_now = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(t_now - t_start);
+    if (time_shift_ms == 0)
+        time_shift_ms = duration.count();
+
+    data_save_os << duration.count() - time_shift_ms << ": ";
     for (float& data : data_vec)
         data_save_os << data << " ";
     data_save_os << "\n";

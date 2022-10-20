@@ -93,10 +93,24 @@ public:
     bool GetVisualService(grasping_position_selection_2d::visual_service::Request &request,
                           grasping_position_selection_2d::visual_service::Response &response) {
         if (tracker_.points_[0].empty() || tracker_.ee_point_[0].empty() || 
-            extractor_.DO_extract_succeed_ == false)
+            grasp_pts_.empty())
             return false;
 
-        response.feedback_pt.push_back(0);
+        response.feedback_pt.push_back(tracker_.points_[0][0].x);
+        response.feedback_pt.push_back(tracker_.points_[0][0].y);
+        response.target_pt.push_back(tracker_.target_pts_[0].x);
+        response.target_pt.push_back(tracker_.target_pts_[0].y);
+        response.ee_pt.push_back(tracker_.ee_point_[0][0].x);
+        response.ee_pt.push_back(tracker_.ee_point_[0][0].y);
+        response.grasp_pt.push_back(grasp_pts_[0].x);
+        response.grasp_pt.push_back(grasp_pts_[0].y);
+        for (int row = 0; row < 2; row++)
+            for (int col = 0; col < 2; col++) {
+                response.Jd.push_back(tracker_.cur_Jd_(row, col));
+            }
+        return true;
+
+        /*
         response.feedback_pt[0] = tracker_.points_[0][0].x;
         response.feedback_pt[1] = tracker_.points_[0][0].y;
         response.target_pt[0] = tracker_.target_pts_[0].x;
@@ -109,6 +123,7 @@ public:
                 cnt++;
             }
         return true;
+        */
     }
 };
 
