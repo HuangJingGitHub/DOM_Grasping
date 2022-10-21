@@ -103,5 +103,4 @@ void WriteDataToFile() {
     data_save_os << "\n";
 }
 
-
 #endif
