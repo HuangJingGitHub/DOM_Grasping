@@ -224,9 +224,15 @@ add_executable(grasping_position_selection_main src/selection_main.cpp)
 target_link_libraries(grasping_position_selection_main ${OpenCV_LIBS} ${catkin_LIBRARIES})
 
 add_executable(test_main src/single_pt_manipulate_main.cpp)
-target_link_libraries(test_main ${OpenCV_LIBS} ${catkin_LIBRARIES} ${PROJECT_SOURCE_DIR}/src/arm_include/libFvrEthernetClient.a pthread -lanl)
+target_link_libraries(test_main ${OpenCV_LIBS} ${catkin_LIBRARIES} ${PROJECT_SOURCE_DIR}/src/arm_include/libFlexivRdk.x86_64-linux-gnu.a)
 add_dependencies(test_main grasping_position_selection_2d_gencpp)
 
+add_executable(arm_test src/robot_config.cpp)
+target_link_libraries(arm_test ${catkin_LIBRARIES}  ${PROJECT_SOURCE_DIR}/src/arm_include/libFlexivRdk.x86_64-linux-gnu.a)
+
+###########################################################
+###########################################################
+###########################################################
 add_executable(rs_hello src/rs_samples/realsense_hello.cpp)
 target_link_libraries(rs_hello realsense2)
 
