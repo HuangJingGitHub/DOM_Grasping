@@ -1,32 +1,15 @@
 /**
  * @brief Flexiv robot
  */
-#ifndef ROBOT_INCLUDED
-#define ROBOT_INCLUDED
-
 #include "arm_include/flexiv/Robot.hpp"
 #include "arm_include/flexiv/Exception.hpp"
 #include "arm_include/flexiv/Log.hpp"
 #include "arm_include/flexiv/Scheduler.hpp"
 #include "arm_include/flexiv/Utility.hpp"
 
-
 #include <iostream>
 #include <cmath>
 #include <thread>
-
-
-// IP of the robot server
-std::string robotIP = "192.168.2.100";
-// IP of the workstation PC running this program
-std::string localIP = "192.168.2.109";
-flexiv::Robot robot(robotIP, localIP);
-flexiv::Scheduler scheduler;
-flexiv::Log robotLog;
-flexiv::RobotStates robotStates;
-
-bool direction_1 = true;
-int cnt = 0;
 
 namespace {
 /** Size of Cartesian pose vector [position 3x1 + rotation (quaternion) 4x1 ] */
@@ -45,23 +28,8 @@ void setNewTcpPose(double delta_x, double delta_y) {
         return;
 
     targetTcpPose = preTcpPose;
-    if (direction_1 == true) {
-        targetTcpPose[0] += 0.001;
-        cnt++;
-        if (cnt == 50) {
-            direction_1 = false;
-        }
-    }
-    else {
-        targetTcpPose[0] -= 0.001;
-        cnt--;
-        if (cnt == 0) {
-            direction_1 = true;
-        }
-    }
-
-    //targetTcpPose[0] += 0.001;
-    //targetTcpPose[1] += delta_y;
+    targetTcpPose[0] += delta_x;
+    targetTcpPose[1] += delta_y;
     isNewTcpPose = true;
 }
 
@@ -111,35 +79,42 @@ void periodicTask(flexiv::Robot* robot, flexiv::Scheduler* scheduler,
 }
 
 
-int initRobotMain() {
+int main(int argc, char* argv[]) {
     // Log object for printing message with timestamp and coloring
-    //flexiv::Log log;
+    flexiv::Log log;
+
+    // IP of the robot server
+    std::string robotIP = "192.168.2.100";
+
+    // IP of the workstation PC running this program
+    std::string localIP = "192.168.2.109";
+
 
     try {
         // RDK Initialization
         //=============================================================================
         // Instantiate robot interface
-        //robot = flexiv::Robot(robotIP, localIP);
+        flexiv::Robot robot(robotIP, localIP);
 
         // Create data struct for storing robot states
-        // flexiv::RobotStates robotStates;
+        flexiv::RobotStates robotStates;
 
         // Clear fault on robot server if any
         if (robot.isFault()) {
-            robotLog.warn("Fault occurred on robot server, trying to clear ...");
+            log.warn("Fault occurred on robot server, trying to clear ...");
             // Try to clear the fault
             robot.clearFault();
             std::this_thread::sleep_for(std::chrono::seconds(2));
             // Check again
             if (robot.isFault()) {
-                robotLog.error("Fault cannot be cleared, exiting ...");
+                log.error("Fault cannot be cleared, exiting ...");
                 return 1;
             }
-            robotLog.info("Fault on robot server is cleared");
+            log.info("Fault on robot server is cleared");
         }
 
         // Enable the robot, make sure the E-stop is released before enabling
-        robotLog.info("Enabling robot ...");
+        log.info("Enabling robot ...");
         robot.enable();
 
         // Wait for the robot to become operational
@@ -147,13 +122,13 @@ int initRobotMain() {
         while (robot.isOperational() == false) {
             std::this_thread::sleep_for(std::chrono::seconds(1));
             if (++secondsWaited == 10) {
-                robotLog.warn(
+                log.warn(
                     "Still waiting for robot to become operational, please "
                     "check that the robot 1) has no fault, 2) is booted "
                     "into Auto mode");
             }
         }
-        robotLog.info("Robot is now operational");
+        log.info("Robot is now operational");
 
         // Set mode after robot is operational
         robot.setMode(flexiv::MODE_CARTESIAN_IMPEDANCE);
@@ -170,21 +145,18 @@ int initRobotMain() {
 
         // Periodic Tasks
         //=============================================================================
-        //flexiv::Scheduler scheduler;
+        flexiv::Scheduler scheduler;
         // Add periodic task with 1ms interval and highest applicable priority
         scheduler.addTask(
-            std::bind(periodicTask, &robot, &scheduler, &robotLog, robotStates),
+            std::bind(periodicTask, &robot, &scheduler, &log, robotStates),
             "Servo periodic", 1, 45);
         // Start all added tasks, this is by default a blocking method
         scheduler.start();
 
     } catch (const flexiv::Exception& e) {
-        robotLog.error(e.what());
+        log.error(e.what());
         return 1;
     }
 
     return 0;
 }
-
-
-#endif
