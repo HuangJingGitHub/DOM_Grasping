@@ -5,27 +5,9 @@ project(grasping_position_selection_2d)
 add_compile_options(-std=c++11)
 # Configure build type
 set(PACKAGE_VERSION "0.6.0")
+set(PACKAGE_VERSION_COMPATIBLE TRUE)
+set(PACKAGE_VERSION_EXACT TRUE)
 
-if(PACKAGE_VERSION VERSION_LESS PACKAGE_FIND_VERSION)
-  set(PACKAGE_VERSION_COMPATIBLE FALSE)
-else()
-  set(PACKAGE_VERSION_COMPATIBLE TRUE)
-  if(PACKAGE_FIND_VERSION STREQUAL PACKAGE_VERSION)
-    set(PACKAGE_VERSION_EXACT TRUE)
-  endif()
-endif()
-
-# if the installed or the using project don't have CMAKE_SIZEOF_VOID_P set, ignore it:
-if("${CMAKE_SIZEOF_VOID_P}" STREQUAL "" OR "8" STREQUAL "")
-   return()
-endif()
-
-# check that the installed version has the same 32/64bit-ness as the one which is currently searching:
-if(NOT CMAKE_SIZEOF_VOID_P STREQUAL "8")
-   math(EXPR installedBits "8 * 8")
-   set(PACKAGE_VERSION "${PACKAGE_VERSION} (${installedBits}bit)")
-   set(PACKAGE_VERSION_UNSUITABLE TRUE)
-endif()
 
 
 ## Find catkin macros and libraries
@@ -40,9 +22,9 @@ find_package(
   image_transport
   sensor_msgs
   message_generation
-  #flexiv_rdk REQUIRED
 )
 
+#find_package(flexiv_rdk REQUIRED PATHS paths... /home/jing/Documents/Scripts/temp_tests/grasping_DOM/build/flexiv_rdk-config.cmake)
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
 find_package(OpenCV REQUIRED)
@@ -134,9 +116,9 @@ generate_messages(
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
 #  INCLUDE_DIRS include
-  INCLUDE_DIRS ./src/robot_include
+#  INCLUDE_DIRS ./src/robot_include
 #  LIBRARIES grasping_position_selection_2d
-  LIBRARIES ./src/robot_lib
+#  LIBRARIES ./src/robot_lib
   CATKIN_DEPENDS roscpp rospy std_msgs message_runtime
 #  DEPENDS system_lib
 )
@@ -251,11 +233,11 @@ add_executable(grasping_position_selection_main src/selection_main.cpp)
 target_link_libraries(grasping_position_selection_main ${OpenCV_LIBS} ${catkin_LIBRARIES})
 
 add_executable(test_main src/single_pt_manipulate_main.cpp)
-target_link_libraries(test_main ${OpenCV_LIBS} ${catkin_LIBRARIES} ${PROJECT_SOURCE_DIR}/src/arm_include/libFlexivRdk.x86_64-linux-gnu.a -pthread)
+target_link_libraries(test_main ${OpenCV_LIBS} ${catkin_LIBRARIES} ${PROJECT_SOURCE_DIR}/src/arm_include/libFlexivRdk.x86_64-linux-gnu.a)
 add_dependencies(test_main grasping_position_selection_2d_gencpp)
 
-add_executable(arm_test src/robot_config.cpp)
-target_link_libraries(arm_test ${catkin_LIBRARIES}  ${PROJECT_SOURCE_DIR}/src/arm_include/libFlexivRdk.x86_64-linux-gnu.a)
+#add_executable(arm_test src/robot_config.cpp)
+#target_link_libraries(arm_test ${catkin_LIBRARIES}  flexiv::flexiv_rdk)
 
 ###########################################################
 ###########################################################
