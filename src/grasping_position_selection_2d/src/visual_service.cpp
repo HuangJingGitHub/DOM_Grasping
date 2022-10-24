@@ -28,7 +28,7 @@ private:
     GraspPositionSelector selector_;
 
     vector<Point2f> grasp_pts_;
-    int cur_pt_num_ = 0;
+    Point2f first_feedback_pt_;
 
 public:
     VisualServiceCore(string ros_image_stream, 
@@ -37,6 +37,7 @@ public:
         extractor_ = ImgExtractor(kWindowName, DO_HSV_thresholds);
         selector_ = GraspPositionSelector();
         image_subscriber_ = image_trans_.subscribe(ros_image_stream, 30, &VisualServiceCore::ProcessImg, this);
+        first_feedback_pt_ = Point2f(0, 0);
         namedWindow(kWindowName);
         hand_logo_ = imread("./src/grasping_position_selection_2d/src/parameters/blue_hand_icon_50X50.png", 
                             cv::ImreadModes::IMREAD_COLOR);
@@ -58,14 +59,18 @@ public:
         cvtColor(cv_ptr->image, cur_gray_img_, COLOR_BGR2GRAY);
         tracker_.Track(cv_ptr->image, cur_gray_img_);
         extractor_.Extract(cv_ptr->image);
-        CheckGraspStatus(cv_ptr);
+        SelectGraspingPosition(cv_ptr);
 
+
+        // draw part
+        drawContours(cv_ptr->image, extractor_.DO_contours_, extractor_.largest_DO_countor_idx_, 
+                    Scalar(250, 0, 150), 1);
         imshow(kWindowName, cv_ptr->image);
         waitKey(2);
     }
 
-    void CheckGraspStatus(cv_bridge::CvImagePtr cv_ptr) {
-        for (int i = 0; i < grasp_pts_.size(); i++) {
+    void SelectGraspingPosition(cv_bridge::CvImagePtr cv_ptr) {
+        for (int i = 0; i < grasp_pts_.size() && tracker_.is_grasped_ == false; i++) {
             rectangle(cv_ptr->image, Rect(grasp_pts_[i].x - 6, grasp_pts_[i].y - 6, 12, 12), Scalar(0, 0, 255), 2);
             circle(cv_ptr->image, grasp_pts_[i], 3, Scalar(0, 0, 255), -1);
             putText(cv_ptr->image, "Sg" + to_string(i + 1), grasp_pts_[i] - Point2f(15, 15), 
@@ -78,14 +83,15 @@ public:
         }
 
         if (extractor_.DO_extract_succeed_ == false || tracker_.ValidFeedbackAndTargetPts() == false
-            || cur_pt_num_ == tracker_.points_[0].size())
+            || cv::norm(first_feedback_pt_ - tracker_.points_[0][0]) < 1)
             return;
         
-        cout << "Enter again\n" << cur_pt_num_ << "~" << tracker_.points_[0].size() << "\n";
-        cur_pt_num_ = tracker_.points_[0].size();
+        cout << "Enter again\n" << tracker_.points_[0].size() << "\n";
+        first_feedback_pt_ = tracker_.points_[0][0];
         vector<double> cur_Q_value(extractor_.DO_contour_.size(), 0);
-        Point2f single_grasp_pt = selector_.SelectSingleGraspPosition(extractor_.DO_contour_, cur_Q_value,
-                                                                    tracker_.points_[0], tracker_.target_pts_);
+        //Point2f single_grasp_pt = selector_.SelectSingleGraspPositionb(extractor_.DO_contour_, cur_Q_value,
+        //                                                            tracker_.points_[0], tracker_.target_pts_);
+        Point2f single_grasp_pt = selector_.SelectSingleGraspPositionbyDistance(extractor_.DO_contour_, tracker_.points_[0]);                                                                    
         grasp_pts_.clear();
         grasp_pts_.push_back(single_grasp_pt);
     }

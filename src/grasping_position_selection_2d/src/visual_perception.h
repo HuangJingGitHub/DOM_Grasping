@@ -62,6 +62,7 @@ public:
     Eigen::MatrixXf cur_Jd_;
     bool Jd_initialized_ = false;
     float Jd_update_rate_ = 0.1;
+    bool is_grasped_ = false;
 
 
     LK_Tracker() {}
@@ -69,7 +70,7 @@ public:
         window_to_track_ = win_name;
         termiantion_criteria_ = TermCriteria(TermCriteria::COUNT | TermCriteria::EPS, 30, 0.03);
         points_color_ = Scalar(255, 0, 0);
-        ee_point_color_ = Scalar(0, 255, 0);
+        ee_point_color_ = Scalar(0, 0, 255);
     }
 
 
@@ -108,6 +109,8 @@ public:
             points_[0].clear();
             points_[1].clear();
             target_pts_.clear();
+            ee_point_[0].clear();
+            ee_point_[1].clear();
         }
 
         if (!points_[0].empty()) {
@@ -118,11 +121,12 @@ public:
         }
         next_gray_img_.copyTo(pre_gray_img_);
         UpdateJd();
+        is_grasped_ = (ee_point_[0].size() > 0);
 
         for (size_t i = 0; i < points_[0].size(); i++)
             circle(image, points_[0][i], 3, points_color_, -1, 8);
         for (size_t i = 0; i < target_pts_.size(); i++)
-            circle(image, target_pts_[i], 10, Scalar(0, 255, 0), 2, 8);
+            circle(image, target_pts_[i], 5, Scalar(0, 255, 0), 1, 8);
     } 
 
 
@@ -332,7 +336,25 @@ public:
         return DO_contour[res_idx];
     }
 
-    
+    Point2f SelectSingleGraspPositionbyDistance(vector<Point>& DO_contour, vector<Point2f>& S_0) {   
+        int min_distance_index = 0;
+        float min_distance_sum = FLT_MAX;
+
+        for (int i = 0; i < DO_contour.size(); i++) {
+            float cur_distance_sum = 0;
+            for (int j = 0; j < S_0.size(); j++) {
+                Eigen::Vector2d d_j(S_0[j].x - DO_contour[i].x, S_0[j].y - DO_contour[i].y);
+                cur_distance_sum += d_j.norm();
+            }
+            if (cur_distance_sum <= min_distance_sum) {
+                min_distance_index = i;
+                min_distance_sum = cur_distance_sum;
+            }
+        }
+
+        return DO_contour[min_distance_index];
+    }
+
     vector<Point2f> SelectDualGraspPositions(vector<Point>& DO_contour, vector<double>& Q_value,
                                              vector<Point2f>& S_0, vector<Point2f>& S_d) {
         if (DO_contour.empty() || S_0.empty() || S_d.empty()) {

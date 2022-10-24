@@ -10,7 +10,6 @@
 #include "arm_include/flexiv/Scheduler.hpp"
 #include "arm_include/flexiv/Utility.hpp"
 
-
 #include <iostream>
 #include <cmath>
 #include <thread>
@@ -22,48 +21,16 @@ std::string robotIP = "192.168.2.100";
 std::string localIP = "192.168.2.109";
 bool robotInitialized = false;
 flexiv::Robot* robotPtr = nullptr;
-bool direction_1 = true;
-int cnt = 0;
-
-namespace {
 const unsigned int k_cartPoseSize = 7;
-static bool isInitPoseSet = false;
-bool isNewTcpPose = false;
-static std::vector<double> preTcpPose;
 static std::vector<double> targetTcpPose;
-}
 
-void setNewTcpPose(double delta_x, double delta_y) {
-    if (isInitPoseSet == false)
-        return;
-
-    targetTcpPose = preTcpPose;
-    if (direction_1 == true) {
-        targetTcpPose[0] += 0.001;
-        cnt++;
-        if (cnt == 50) {
-            direction_1 = false;
-        }
-    }
-    else {
-        targetTcpPose[0] -= 0.001;
-        cnt--;
-        if (cnt == 0) {
-            direction_1 = true;
-        }
-    }
-
-    //targetTcpPose[0] += 0.001;
-    //targetTcpPose[1] += delta_y;
-    isNewTcpPose = true;
-}
 
 
 /** Callback function for realtime periodic task */
-void moveRobot(flexiv::Robot* robotPtr) {
+bool moveRobot(flexiv::Robot* robotPtr, double delta_x, double delta_y) {
     // Flag whether initial Cartesian position is set
     if (robotPtr == nullptr)
-        return;
+        return false;
 
     try {
         // Monitor fault on robot server
@@ -74,33 +41,15 @@ void moveRobot(flexiv::Robot* robotPtr) {
 
         flexiv::RobotStates robotStates;
         robotPtr->getRobotStates(robotStates);
-
-        // Set initial TCP pose
-        if (isInitPoseSet == false) {
-            // Check vector size before saving
-            if (robotStates.tcpPose.size() == k_cartPoseSize) {
-                preTcpPose = robotStates.tcpPose;
-                isInitPoseSet = true;
-                std::cout <<
-                    "Initial Cartesion pose of robot TCP set to [position "
-                    "3x1 + rotation (quaternion) 4x1]: "
-                    + flexiv::utility::vec2Str(preTcpPose);
-            }
-        }
-        // Run control only after initial pose is set
-        else if (isNewTcpPose == true) {
-            robotPtr->streamTcpPose(targetTcpPose);
-            robotPtr->getRobotStates(robotStates);
-            preTcpPose = robotStates.tcpPose;
-            isNewTcpPose = false;
-        } 
-        else {
-            std::cout << "No move is made\n";
-        }
-
-    } catch (const flexiv::Exception& e) {
+        targetTcpPose = robotStates.tcpPose;
+        targetTcpPose[0] += delta_x;
+        targetTcpPose[1] += delta_y;
+        robotPtr->sendTcpPose(targetTcpPose);
+        return true;
+    } 
+    catch (const flexiv::Exception& e) {
         std::cerr << e.what();
-        return;
+        return false;
     }
 }
 
@@ -138,7 +87,6 @@ int initRobotMain() {
 
     // Set mode after robot is operational
     robot.setMode(flexiv::MODE_CARTESIAN_IMPEDANCE_NRT);
-
     // Wait for the mode to be switched
     while (robot.getMode() != flexiv::MODE_CARTESIAN_IMPEDANCE_NRT) {
         std::this_thread::sleep_for(std::chrono::milliseconds(1));

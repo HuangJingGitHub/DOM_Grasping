@@ -4,7 +4,7 @@
 #include "robot_config.hpp"
 
 const int motion_interval = 45;   // in millisecond
-const float motion_magnitude = 0.001; // in meter
+const float motion_magnitude = 0.002; // in meter
 const float error_threshold = 5; // in pixel
 
 
@@ -35,7 +35,7 @@ int main(int argc, char** argv) {
     ros::ServiceClient service_client = node_handle.serviceClient<grasping_position_selection_2d::visual_service>("visual_service");
     grasping_position_selection_2d::visual_service srv;
     srv.request.feedback_pt_num = 1;
-    initRobotMain();
+    //initRobotMain();
 
     std::string start_flag;
     std::cout << "Press 1 to start the manipulation experiment.\n";
@@ -53,11 +53,16 @@ int main(int argc, char** argv) {
         }
 
         ProcessServece(srv);
-        WriteDataToFile();
+        WriteDataToFile();        
+        ee_velocity_3D = camera_to_base * ee_velocity_image_3D;
+        ee_velocity_3D = motion_magnitude / ee_velocity_3D.norm() * ee_velocity_3D;         
+        std::cout << ee_velocity_3D << "\n";
+        //if (moveRobot(robotPtr, (double)ee_velocity_3D[0], (double)ee_velocity_3D[1]) == false) {
+        //    std::cout << "Fail to execute the command. Exiting\n";
+        //    break;
+        //}
+        std::this_thread::sleep_for(std::chrono::milliseconds(motion_interval * 10));
         
-        setNewTcpPose(0, 0);
-        std::this_thread::sleep_for(std::chrono::seconds(1));
-
         if (total_error_pt.norm() < error_threshold) {
             if (data_save_os.is_open())
                 data_save_os.close();

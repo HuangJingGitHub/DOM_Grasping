@@ -222,8 +222,8 @@ include_directories(
 add_executable(source_camera src/source_camera.cpp)
 target_link_libraries(source_camera ${OpenCV_LIBS} ${catkin_LIBRARIES})
 
-add_executable(get_HSV_thresholds src/get_visual_system_parameters.cpp)
-target_link_libraries(get_HSV_thresholds ${OpenCV_LIBS} opencv_aruco)
+add_executable(get_HSV_extrinsic src/get_visual_system_parameters.cpp)
+target_link_libraries(get_HSV_extrinsic ${OpenCV_LIBS} opencv_aruco)
 
 add_executable(visual_service src/visual_service.cpp)
 target_link_libraries(visual_service ${OpenCV_LIBS} ${catkin_LIBRARIES})
@@ -242,23 +242,23 @@ add_dependencies(test_main grasping_position_selection_2d_gencpp)
 ###########################################################
 ###########################################################
 ###########################################################
-add_executable(rs_hello src/rs_samples/realsense_hello.cpp)
-target_link_libraries(rs_hello realsense2)
+#add_executable(rs_hello src/rs_samples/realsense_hello.cpp)
+#target_link_libraries(rs_hello realsense2)
 
-add_executable(rs_depth src/rs_samples/rs_depth.c)
-target_link_libraries(rs_depth realsense2)
+#add_executable(rs_depth src/rs_samples/rs_depth.c)
+#target_link_libraries(rs_depth realsense2)
 
-add_executable(rs_imshow src/rs_samples/rs_imshow.cpp)
-target_link_libraries(rs_imshow realsense2 ${OpenCV_LIBS})
+#add_executable(rs_imshow src/rs_samples/rs_imshow.cpp)
+#target_link_libraries(rs_imshow realsense2 ${OpenCV_LIBS})
 
-add_executable(rs_align src/rs_samples/rs_align.cpp 
-                        src/rs_samples/third-party/imgui/imgui.cpp
-                        src/rs_samples/third-party/imgui/imgui_draw.cpp 
-                        src/rs_samples/third-party/imgui/imgui_impl_glfw.cpp)
-target_link_libraries(rs_align realsense2 realsense2 glfw GL GLU)
+#add_executable(rs_align src/rs_samples/rs_align.cpp 
+#                        src/rs_samples/third-party/imgui/imgui.cpp
+#                        src/rs_samples/third-party/imgui/imgui_draw.cpp 
+#                        src/rs_samples/third-party/imgui/imgui_impl_glfw.cpp)
+#target_link_libraries(rs_align realsense2 realsense2 glfw GL GLU)
 
-add_executable(rs_pointcloud src/rs_samples/rs_pointcloud.cpp)
-target_link_libraries(rs_pointcloud realsense2 glfw GL GLU)
+#add_executable(rs_pointcloud src/rs_samples/rs_pointcloud.cpp)
+#target_link_libraries(rs_pointcloud realsense2 glfw GL GLU)
 
-add_executable(rs_grabcuts src/rs_samples/rs_grabcuts.cpp)
-target_link_libraries(rs_grabcuts realsense2 ${OpenCV_LIBS})
+#add_executable(rs_grabcuts src/rs_samples/rs_grabcuts.cpp)
+#target_link_libraries(rs_grabcuts realsense2 ${OpenCV_LIBS})

@@ -73,6 +73,7 @@ void ProcessServece(const grasping_position_selection_2d::visual_service& srv) {
     ee_velocity_image = -Jd.inverse() * total_error_pt;
     ee_velocity_image_3D(0, 0) = ee_velocity_image(0, 0);
     ee_velocity_image_3D(1, 0) = ee_velocity_image(1, 0);
+    ee_velocity_image_3D(2, 0) = 0;
     
     data_vec.push_back(feedback_pt(0, 0));
     data_vec.push_back(feedback_pt(1, 0));
