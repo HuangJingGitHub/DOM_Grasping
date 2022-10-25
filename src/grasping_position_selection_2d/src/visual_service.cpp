@@ -26,9 +26,13 @@ private:
     LK_Tracker tracker_;
     ImgExtractor extractor_;
     GraspPositionSelector selector_;
+    /*Mode1: Using Task-Oriented Metric in Selection  
+      Mode2: Using Distance in Selection*/
+    int DEFAULT_SELECTION_MODE_ = 0;  
 
     vector<Point2f> grasp_pts_;
     Point2f first_feedback_pt_;
+    
 
 public:
     VisualServiceCore(string ros_image_stream, 
@@ -59,7 +63,8 @@ public:
         cvtColor(cv_ptr->image, cur_gray_img_, COLOR_BGR2GRAY);
         tracker_.Track(cv_ptr->image, cur_gray_img_);
         extractor_.Extract(cv_ptr->image);
-        SelectGraspingPosition(cv_ptr);
+        if (tracker_.points_num_ == tracker_.points_[0].size() && DEFAULT_SELECTION_MODE_ != 0)
+            SelectGraspingPosition(cv_ptr);
 
 
         // draw part
@@ -86,50 +91,42 @@ public:
             || cv::norm(first_feedback_pt_ - tracker_.points_[0][0]) < 1)
             return;
         
-        cout << "Enter again\n" << tracker_.points_[0].size() << "\n";
         first_feedback_pt_ = tracker_.points_[0][0];
         vector<double> cur_Q_value(extractor_.DO_contour_.size(), 0);
-        //Point2f single_grasp_pt = selector_.SelectSingleGraspPositionb(extractor_.DO_contour_, cur_Q_value,
-        //                                                            tracker_.points_[0], tracker_.target_pts_);
-        Point2f single_grasp_pt = selector_.SelectSingleGraspPositionbyDistance(extractor_.DO_contour_, tracker_.points_[0]);                                                                    
+        Point2f single_grasp_pt;
+        if (DEFAULT_SELECTION_MODE_ == 1)
+            single_grasp_pt = selector_.SelectSingleGraspPosition(extractor_.DO_contour_, cur_Q_value,
+                                                                    tracker_.points_[0], tracker_.target_pts_);
+        else if (DEFAULT_SELECTION_MODE_ == 2)
+            single_grasp_pt = selector_.SelectSingleGraspPositionbyDistance(extractor_.DO_contour_, tracker_.points_[0]);                                                                    
         grasp_pts_.clear();
         grasp_pts_.push_back(single_grasp_pt);
     }
 
     bool GetVisualService(grasping_position_selection_2d::visual_service::Request &request,
                           grasping_position_selection_2d::visual_service::Response &response) {
+        DEFAULT_SELECTION_MODE_ = request.selection_mode;
         if (tracker_.points_[0].empty() || tracker_.ee_point_[0].empty() || 
             grasp_pts_.empty())
             return false;
 
-        response.feedback_pt.push_back(tracker_.points_[0][0].x);
-        response.feedback_pt.push_back(tracker_.points_[0][0].y);
-        response.target_pt.push_back(tracker_.target_pts_[0].x);
-        response.target_pt.push_back(tracker_.target_pts_[0].y);
+        for (int i = 0; i < tracker_.points_num_; i++) {
+            response.feedback_pt.push_back(tracker_.points_[0][i].x);
+            response.feedback_pt.push_back(tracker_.points_[0][i].y);
+            response.target_pt.push_back(tracker_.target_pts_[i].x);
+            response.target_pt.push_back(tracker_.target_pts_[i].y);            
+        }
         response.ee_pt.push_back(tracker_.ee_point_[0][0].x);
         response.ee_pt.push_back(tracker_.ee_point_[0][0].y);
         response.grasp_pt.push_back(grasp_pts_[0].x);
         response.grasp_pt.push_back(grasp_pts_[0].y);
-        for (int row = 0; row < 2; row++)
+
+        for (int row = 0; row < 2 * tracker_.points_num_; row++)
             for (int col = 0; col < 2; col++) {
                 response.Jd.push_back(tracker_.cur_Jd_(row, col));
             }
         return true;
 
-        /*
-        response.feedback_pt[0] = tracker_.points_[0][0].x;
-        response.feedback_pt[1] = tracker_.points_[0][0].y;
-        response.target_pt[0] = tracker_.target_pts_[0].x;
-        response.target_pt[1] = tracker_.target_pts_[0].y;
-        response.ee_pt[0] = tracker_.ee_point_[0][0].x;
-        response.ee_pt[1] = tracker_.ee_point_[0][0].y;
-        for (int row = 0, cnt = 0; row < 2; row++)
-            for (int col = 0; col < 2; col++) {
-                response.Jd[cnt] = tracker_.cur_Jd_(row, col);
-                cnt++;
-            }
-        return true;
-        */
     }
 };
 

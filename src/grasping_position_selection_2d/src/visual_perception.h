@@ -49,7 +49,7 @@ class LK_Tracker {
 public: 
     string window_to_track_;
     TermCriteria termiantion_criteria_;
-    static const int points_num_ = 1;  // Determination of Jd size needs a constexpr argument.
+    static const int points_num_ = 3;  // Determination of Jd size needs a constexpr argument.
     vector<Point2f> points_[2];
     vector<Point2f> target_pts_;
     vector<Point2f> ee_point_[2];

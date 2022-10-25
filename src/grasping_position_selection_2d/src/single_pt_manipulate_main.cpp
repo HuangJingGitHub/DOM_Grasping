@@ -34,18 +34,23 @@ int main(int argc, char** argv) {
     ros::NodeHandle node_handle;
     ros::ServiceClient service_client = node_handle.serviceClient<grasping_position_selection_2d::visual_service>("visual_service");
     grasping_position_selection_2d::visual_service srv;
-    srv.request.feedback_pt_num = 1;
+    srv.request.selection_mode = 0;
     //initRobotMain();
 
     std::string start_flag;
     std::cout << "Press 1 to start the manipulation experiment.\n";
     getline(std::cin, start_flag);
-    if (start_flag != "1") {
-        std::cout << "Exiting program.\n";
+    if (start_flag == "1")
+        srv.request.selection_mode = 1;
+    else if (start_flag == "2")
+        srv.request.selection_mode = 2;
+    else {
+        std::cout << "Invalid Selection Mode (should be 1 or 2). Exiting program.\n";
         return -1;
     }
+    service_client.call(srv);
 
-    InitializeFiles(motion_interval, motion_magnitude, error_threshold);
+    InitializeFiles(motion_interval, motion_magnitude, error_threshold, start_flag);
     while (true) {
         if (!service_client.call(srv)) {
             std::cout << "Fail to call the service.\n";

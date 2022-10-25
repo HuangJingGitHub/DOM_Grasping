@@ -1,4 +1,4 @@
-int64 feedback_pt_num
+int64 selection_mode
 ---
 float32[] feedback_pt
 float32[] target_pt
