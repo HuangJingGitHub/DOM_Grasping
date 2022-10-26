@@ -27,7 +27,7 @@ private:
     ImgExtractor extractor_;
     GraspPositionSelector selector_;
     /*Mode1: Using Task-Oriented Metric in Selection  
-      Mode2: Using Distance in Selection*/
+      Mode2: Using Distance Sum in Selection*/
     int DEFAULT_SELECTION_MODE_ = 0;  
 
     vector<Point2f> grasp_pts_;
